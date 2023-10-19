@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 const port = process.env.PORT || 5000;
 
@@ -31,9 +31,24 @@ async function run() {
 
     const database = client.db("userDB56hY");
     const productCollection = database.collection("product");
+    const brandCollection = database.collection("brand");
+
 
     app.get('/shop', async(req, res) => {
         const cursor = productCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+    })
+
+    app.get('/product/:id:', async(req, res) => {
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)};
+        const product = await productCollection.findOne(query);
+        res.send(product);
+    })
+
+    app.get('/getbrand', async(req, res) => {
+        const cursor = brandCollection.find();
         const result = await cursor.toArray();
         res.send(result);
     })
@@ -46,7 +61,32 @@ async function run() {
 
     })
 
-    
+    app.post('/brand', async(req, res) =>{
+        const newBrand = req.body;
+        console.log(newBrand)
+        const result = await brandCollection.insertOne(newBrand);
+        res.send(result);
+    })
+
+    app.put('/product/:id:', async(req, res) =>{
+        const id = req.params.id;
+        console.log(updateProduct)
+        const filter = {_id: new ObjectId(id)};
+        const options = {upsert : true};
+        const updateProduct = req.body;
+        const updatedProduct = {
+            $set : {
+                image: updateProduct.image,
+                name : updateProduct.name,
+                price: updateProduct.price,
+                type: updateProduct.type,
+                brand: updateProduct.brand,
+                description: updateProduct.image
+            }
+        }
+        const result = await productCollection.updateOne(filter, updatedProduct, options);
+        res.send(result)
+    })
 
 
     // Send a ping to confirm a successful connection
